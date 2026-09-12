@@ -1,7 +1,8 @@
 Thank you for downloading the Worship Planner. 
 
 **INSTALLATION**
-This file runs offline in any browser. Save it somewhere on your computer, so that when you open it, you can Favourite it as you would a website, and come back to it easily in a click.
+The Worship Planner html file runs offline in any browser. Save it somewhere on your computer, so that when you open it, you can Favourite it as you would a website, and come back to it easily in a click.
+Otherwise open the INDEX file on your phone, while online, let it download the other files it needs, and then it will run offline.
 
 **Select a Sunday**
 At the top of the screen is a Sunday Selector, which defaults to today or the most recent Sunday. Use the Calendar pick the date you want. The Browse All Dates button gives you a list of all dates this church year - scroll it to see the current Sunday selected. You can click on any date in this scrollable list.
