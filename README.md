@@ -11,6 +11,9 @@ At the top of the screen is a Sunday Selector, which defaults to today or the mo
 The Lectionary Readings for the selected Sunday, as printed in the Methodist Worship Book (which follows the Revised Common Lectionary for the Principal Service), are displayed. If you are online, these readings can be opened on Bible Gateway in either the NRSV or NIV translation.
 For each reading you select, related hymns are displayed below.
 
+**Covenant Sunday**
+On the first Sunday in September and the first Sunday in January, a "Covenant Sunday" tick-box appears under the date. Ticking it switches to the Methodist Covenant Service: the first reading of each Either/Or pair (Exodus 24:3-11 and John 15:1-10) is pre-selected along with Jeremiah and Romans, and hymn 549, "Come, let us use the grace divine", is added automatically. Tick the alternative readings (Deuteronomy 29:10-15, Mark 14:22-25) instead if you prefer. Change the date to return to the normal readings.
+
 **The Collect**
 Two Collects are provided for each Sunday. You can select either one to include in your export.
 

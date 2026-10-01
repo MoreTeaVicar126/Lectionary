@@ -8,7 +8,8 @@
 //
 // v3: This update corrects version numbering (a v2 had been used previously)
 // and includes the Methodist Worship Book lectionary corrections.
-const CACHE_NAME = 'worship-planner-v3';
+// v4: Adds the Covenant Sunday option (first Sunday in September or January).
+const CACHE_NAME = 'worship-planner-v4';
 
 const APP_SHELL = [
   './',
