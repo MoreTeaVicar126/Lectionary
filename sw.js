@@ -5,7 +5,10 @@
 // "v1" to "v2"). That's what tells an installed phone "there's a new
 // version, go fetch it". If you forget, the phone will keep showing the
 // old cached copy indefinitely, even after you re-upload to GitHub Pages.
-const CACHE_NAME = 'worship-planner-v2';
+//
+// v3: This update corrects version numbering (a v2 had been used previously)
+// and includes the Methodist Worship Book lectionary corrections.
+const CACHE_NAME = 'worship-planner-v3';
 
 const APP_SHELL = [
   './',
