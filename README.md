@@ -8,7 +8,7 @@ Otherwise open the INDEX file on your phone, while online, let it download the o
 At the top of the screen is a Sunday Selector, which defaults to today or the most recent Sunday. Use the Calendar pick the date you want. The Browse All Dates button gives you a list of all dates this church year - scroll it to see the current Sunday selected. You can click on any date in this scrollable list.
 
 **Lectionary Readings**
-The RCL Lectionary Readings for the selected Sunday are displayed. If you are online, these readings can be opened on Bible Gateway in either the NRSV or NIV translation.
+The Lectionary Readings for the selected Sunday, as printed in the Methodist Worship Book (which follows the Revised Common Lectionary for the Principal Service), are displayed. If you are online, these readings can be opened on Bible Gateway in either the NRSV or NIV translation.
 For each reading you select, related hymns are displayed below.
 
 **The Collect**
