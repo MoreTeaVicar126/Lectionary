@@ -229,6 +229,24 @@ function parseWeekWindow(name){
   return {d1:d1,mo1:mo1,d2:d2,mo2:mo2};
 }
 
+/* ============ Proper numbers (RCL) ============
+   A Proper is keyed to the date window of its Sunday (e.g. Proper 25 = Sunday
+   between 23 and 29 October). Only the post-Trinity windows (24 May - 26 Nov)
+   carry Proper numbers; Proper N = Sunday N+5 in Ordinary Time. */
+var PROPER_BY_WINDOW_START={"4-24":3,"4-29":4,"5-5":5,"5-12":6,"5-19":7,"5-26":8,"6-3":9,"6-10":10,"6-17":11,"6-24":12,"6-31":13,"7-7":14,"7-14":15,"7-21":16,"7-28":17,"8-4":18,"8-11":19,"8-18":20,"8-25":21,"9-2":22,"9-9":23,"9-16":24,"9-23":25,"9-30":26,"10-6":27,"10-13":28,"10-20":29};
+function properNumberFor(occasionName){
+  if(!occasionName || occasionName.indexOf("All Saints")===0) return null;
+  var w=parseWeekWindow(occasionName);
+  if(!w) return null;
+  var key=w.mo1+"-"+w.d1;
+  return PROPER_BY_WINDOW_START.hasOwnProperty(key) ? PROPER_BY_WINDOW_START[key] : null;
+}
+function withProper(displayName, occasionName){
+  var p=properNumberFor(occasionName);
+  if(!p) return displayName;
+  return /\)$/.test(displayName) ? displayName.slice(0,-1)+', Proper '+p+')' : displayName+' (Proper '+p+')';
+}
+
 function buildChurchYear(startYear, lectionary){
   var items=[]; // {date:Date, occasion:obj, label:string}
   function add(date, occ){ if(date) items.push({date:date, occasion:occ}); }
@@ -773,7 +791,7 @@ function render(){
   if(occasion.sets){
     html+='<div class="small" style="margin-top:6px">Christmas has three alternative reading sets (I, II, III) for use at different services; set III should be used at some service during the celebration.</div>';
   }
-  document.getElementById('occasion-title').textContent=cleanOccasionName(occasion.occasion);
+  document.getElementById('occasion-title').textContent=withProper(cleanOccasionName(occasion.occasion), occasion.occasion);
   document.getElementById('occasion-meta-box').innerHTML=html;
   var covChk=document.getElementById('chk-covenant');
   if(covChk) covChk.addEventListener('change', function(){ setCovenant(covChk.checked); });
@@ -1036,7 +1054,7 @@ function renderCalendarList(){
   found.calendar.forEach(function(it){
     var itYmd=ymd(it.date);
     var isCurrent=itYmd===effectiveYmd;
-    html+='<tr class="cal-row'+(isCurrent?' today':'')+'" data-jump="'+itYmd+'"><td class="cal-date">'+friendlyDate(it.date)+'</td><td>'+escapeHtml(cleanOccasionName(it.occasion.occasion))+'</td></tr>';
+    html+='<tr class="cal-row'+(isCurrent?' today':'')+'" data-jump="'+itYmd+'"><td class="cal-date">'+friendlyDate(it.date)+'</td><td>'+escapeHtml(withProper(cleanOccasionName(it.occasion.occasion), it.occasion.occasion))+'</td></tr>';
   });
   html+='</table>';
   box.innerHTML=html;
@@ -1059,7 +1077,7 @@ function buildPrintView(){
   var chosen=(state.service==='second')?svc.second:svc.principal;
   var list=readingsListFor(chosen);
   var lines=[];
-  lines.push(occasion.occasion+'  (Year '+found.letter+', '+friendlyDate(found.entry.date)+')');
+  lines.push(withProper(occasion.occasion, occasion.occasion)+'  (Year '+found.letter+', '+friendlyDate(found.entry.date)+')');
   lines.push('');
   lines.push((state.service==='second'?'SECOND SERVICE':'PRINCIPAL SERVICE')+' READINGS');
   list.forEach(function(item){
@@ -1100,7 +1118,7 @@ function exportPdf(){
   var svc = occasion.years ? occasion.years[found.letter] : occasion;
   var chosen=(state.service==='second')?svc.second:svc.principal;
   var list=readingsListFor(chosen);
-  var html='<h1>'+escapeHtml(occasion.occasion)+'</h1>';
+  var html='<h1>'+escapeHtml(withProper(occasion.occasion, occasion.occasion))+'</h1>';
   html+='<p>Year '+found.letter+' &middot; '+friendlyDate(found.entry.date)+'</p>';
   html+='<h2>'+(state.service==='second'?'Second':'Principal')+' Service Readings</h2><ul>';
   list.forEach(function(item){
