@@ -77,7 +77,7 @@ button.toggle.active{background:var(--red);color:#fff;border-color:var(--red);}
 .covenant-option label{cursor:pointer;}
 .controlsbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:6px;}
 .export-bar{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;}
-#hymn-search-input{width:100%;font-size:15px;padding:9px 10px;border:1px solid var(--line-strong);border-radius:4px;font-family:var(--ui);margin-bottom:8px;box-sizing:border-box;}
+#hymn-search-input,#author-input{width:100%;font-size:15px;padding:9px 10px;border:1px solid var(--line-strong);border-radius:4px;font-family:var(--ui);margin-bottom:8px;box-sizing:border-box;}
 #hymn-search-results{max-height:260px;overflow-y:auto;}
 .search-more{font-size:12px;color:var(--ink-soft);padding:6px 0;font-style:italic;}
 .bible-select{font-size:14px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:4px;font-family:var(--ui);background:#fff;}
@@ -86,6 +86,12 @@ button.toggle.active{background:var(--red);color:#fff;border-color:var(--red);}
 .export-bar button.secondary{background:#fff;color:var(--red-dark);}
 .export-bar button:hover{opacity:.9;}
 .empty-note{font-size:13px;color:var(--ink-soft);font-style:italic;padding:6px 0;}
+.hymn-row.author-hit{background:#fff6d6;box-shadow:inset 4px 0 0 var(--red);padding-left:10px;}
+.hymn-row.author-dim{opacity:.5;}
+.author-tag{display:inline-block;font-family:var(--ui);font-size:11px;font-weight:700;color:var(--red-dark);background:var(--red-tint);border:1px solid var(--red);border-radius:10px;padding:0 7px;margin-left:6px;vertical-align:1px;}
+.author-count{font-weight:700;color:var(--red-dark);text-transform:none;letter-spacing:0;}
+.author-opts{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:6px 0;}
+.author-results{max-height:380px;overflow-y:auto;margin-top:8px;border-top:1px dashed var(--line);}
 #printview{display:none;}
 @media print{
   .ribbon, .wrap{display:none !important;}
@@ -143,6 +149,20 @@ button.toggle.active{background:var(--red);color:#fff;border-color:var(--red);}
     <h2>Collect</h2>
     <label class="small"><input type="checkbox" id="chk-collect"> Include in export</label>
     <div id="collect-box"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Hymn Authors</h2>
+    <p class="small">Type an author (e.g. <em>Wesley</em>, <em>Watts</em>) to highlight their hymns in the lists below, and to list every hymn by that author in the book. Tick a result to add it to Other Hymns.</p>
+    <input type="text" id="author-input" list="author-names" placeholder="e.g. Wesley, Watts, Fred Pratt Green" autocomplete="off">
+    <datalist id="author-names"></datalist>
+    <div class="controlsbar" id="author-chips"></div>
+    <div class="author-opts">
+      <label class="small"><input type="checkbox" id="chk-author-only"> Show only this author's hymns in the Hymns and Hymns by Bible Passage lists</label>
+      <button class="link-btn" id="btn-author-clear">Clear</button>
+    </div>
+    <div class="small" id="author-summary"></div>
+    <div class="author-results" id="author-results"></div>
   </div>
 
   <div class="panel">
@@ -523,6 +543,158 @@ function hymnsForReading(readingStr, DATA){
   return {order:order, details:details};
 }
 
+/* ============ Hymn authors ============ */
+var AUTHOR_INDEX=null;
+function foldText(s){
+  s=String(s||'').toLowerCase();
+  try{ s=s.normalize('NFD').replace(/[̀-ͯ]/g,''); }catch(e){}
+  return s;
+}
+// Split a hymnal "author" string into the people who wrote the words. Adapters,
+// "based on Psalm ..." notes and verse-only credits are handled so that, for
+// example, "Andrew Pratt (based on John Wesley's final words)" is not a Wesley hymn.
+function authorNamesFromString(str){
+  var s=String(str||'').replace(/\s*\((?:based on|from|after)\b[^)]*\)/gi,'');
+  var out=[];
+  s.split(';').forEach(function(seg){
+    seg=seg.trim();
+    if(!seg) return;
+    if(/^(adapted|altered|paraphrased|based on|from |unascribed)/i.test(seg)) return;
+    seg=seg.replace(/^(?:vv?\.|refrain)\s*[\d,\s–-]*/i,'').trim();
+    if(seg) out.push(seg);
+  });
+  return out;
+}
+function authorIndex(){
+  if(AUTHOR_INDEX) return AUTHOR_INDEX;
+  var byNum={}, counts={};
+  Object.keys(DATA.hymnal).forEach(function(num){
+    var seen={}, list=[];
+    DATA.hymnal[num].forEach(function(v){
+      if(v.isCanticle || !v.author) return;
+      authorNamesFromString(v.author).forEach(function(n){
+        if(!seen[n]){ seen[n]=true; list.push({name:n, folded:foldText(n)}); }
+      });
+    });
+    byNum[num]=list;
+    list.forEach(function(p){ counts[p.name]=(counts[p.name]||0)+1; });
+  });
+  var names=Object.keys(counts).sort(function(a,b){return a.localeCompare(b);});
+  AUTHOR_INDEX={byNum:byNum, counts:counts, names:names};
+  return AUTHOR_INDEX;
+}
+function authorActive(){ return foldText(state.authorQuery).trim().length>=2; }
+function authorMatchNames(num){
+  if(!authorActive()) return [];
+  var q=foldText(state.authorQuery).trim();
+  return (authorIndex().byNum[num]||[]).filter(function(p){return p.folded.indexOf(q)>=0;}).map(function(p){return p.name;});
+}
+function authorRowClass(num, dim){
+  if(!authorActive()) return '';
+  return authorMatchNames(num).length ? ' author-hit' : (dim ? ' author-dim' : '');
+}
+function authorTagHtml(num){
+  var m=authorMatchNames(num);
+  return m.length ? ' <span class="author-tag">'+escapeHtml(m.join(', '))+'</span>' : '';
+}
+function authorHides(num){ return authorActive() && state.authorOnly && !authorMatchNames(num).length; }
+function authorGroupNote(nums){
+  if(!authorActive()) return '';
+  var n=nums.filter(function(x){return authorMatchNames(x).length;}).length;
+  return ' <span class="author-count">&mdash; '+n+' by '+escapeHtml(state.authorQuery.trim())+'</span>';
+}
+function authorMatchingHymns(){
+  if(!authorActive()) return [];
+  var out=Object.keys(DATA.hymnal).filter(function(num){return authorMatchNames(num).length;});
+  out.sort(function(a,b){return parseInt(a,10)-parseInt(b,10);});
+  return out;
+}
+function topAuthors(limit){
+  var idx=authorIndex();
+  return idx.names.filter(function(n){return !/^(liturgical|anon|taize)/i.test(n);})
+    .sort(function(a,b){return idx.counts[b]-idx.counts[a] || a.localeCompare(b);})
+    .slice(0,limit);
+}
+function populateAuthorControls(){
+  var idx=authorIndex();
+  var dl=document.getElementById('author-names');
+  idx.names.forEach(function(n){
+    var opt=document.createElement('option');
+    opt.value=n; opt.label=idx.counts[n]+(idx.counts[n]===1?' hymn':' hymns');
+    dl.appendChild(opt);
+  });
+  renderAuthorChips();
+}
+function renderAuthorChips(){
+  var idx=authorIndex();
+  var cur=foldText(state.authorQuery).trim();
+  var html='';
+  topAuthors(8).forEach(function(n){
+    html+='<button class="toggle'+(foldText(n)===cur?' active':'')+'" data-name="'+encodeURIComponent(n)+'">'+escapeHtml(n)+' ('+idx.counts[n]+')</button>';
+  });
+  document.getElementById('author-chips').innerHTML=html;
+}
+function renderAuthorResults(){
+  var box=document.getElementById('author-results');
+  var sum=document.getElementById('author-summary');
+  var q=state.authorQuery.trim();
+  if(!authorActive()){
+    sum.textContent=q ? 'Keep typing… (at least two letters).' : '';
+    box.innerHTML=''; return;
+  }
+  var nums=authorMatchingHymns();
+  if(!nums.length){ sum.textContent=''; box.innerHTML='<p class="empty-note">No hymn authors match &ldquo;'+escapeHtml(q)+'&rdquo;.</p>'; return; }
+  sum.innerHTML='<strong>'+nums.length+'</strong> hymn'+(nums.length===1?'':'s')+' in the book by &ldquo;'+escapeHtml(q)+'&rdquo;. They are highlighted in the lists below too.';
+  var html='';
+  nums.forEach(function(num){
+    var variants=DATA.hymnal[num];
+    var first=variants[0];
+    var checked=state.otherHymns[num]===true;
+    var refs=allScriptureRefsForHymn(num, DATA);
+    var refStr=refs.length?formatRefList(refs):'';
+    html+='<div class="hymn-row">'+
+      '<input type="checkbox" class="author-hymn-check" data-num="'+num+'" '+(checked?'checked':'')+'>'+
+      '<div class="hymn-num">'+escapeHtml(first.number)+'</div>'+
+      '<div class="hymn-title">'+escapeHtml(first.first_line)+authorTagHtml(num)+
+        (variants.length>1?' <span class="hymn-tune">('+variants.length+' tune settings)</span>':(first.tune?' <span class="hymn-tune">&mdash; '+escapeHtml(first.tune)+'</span>':''))+
+        '<div class="hymn-section" id="authorsec-'+num+'">'+escapeHtml(first.part)+(first.subsection?' / '+escapeHtml(first.subsection):'')+(first.author?' &middot; '+escapeHtml(first.author):'')+
+          (refStr?'<br>Verse(s) linked by the Index: '+escapeHtml(refStr):'<br>No Bible references linked by the Index.')+
+        '</div>'+
+      '</div>'+
+      '<button class="link-btn" data-secid="authorsec-'+num+'">Details</button>'+
+    '</div>';
+  });
+  var scroll=box.scrollTop;
+  box.innerHTML=html;
+  box.scrollTop=scroll;
+  Array.prototype.forEach.call(box.querySelectorAll('.author-hymn-check'), function(cb){
+    cb.addEventListener('change', function(){
+      var num=cb.getAttribute('data-num');
+      if(cb.checked){ state.otherHymns[num]=true; } else { delete state.otherHymns[num]; }
+      tickHymnOrder(num, cb.checked);
+      renderOtherHymns();
+      renderHymnSearchResults();
+      renderBibleChapterResults();
+      renderAuthorResults();
+    });
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-secid]'), function(btn){
+    btn.addEventListener('click', function(){ document.getElementById(btn.getAttribute('data-secid')).classList.toggle('show'); });
+  });
+}
+function refreshAuthorUI(){
+  if(document.getElementById('datepick').value) renderHymnsFromCurrent();
+  renderOtherHymns();
+  renderBibleChapterResults();
+  renderHymnSearchResults();
+  renderAuthorResults();
+  renderAuthorChips();
+}
+function setAuthorQuery(v){
+  state.authorQuery=String(v||'');
+  refreshAuthorUI();
+}
+
 /* ============ Hymns by Bible Book & Chapter ============ */
 var BIBLE_BOOK_ORDER=["Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
 "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
@@ -610,11 +782,12 @@ function renderBibleChapterResults(){
     if(!variants) return;
     var first=variants[0];
     var checked=state.otherHymns[num]===true;
+    if(!checked && authorHides(num)) return;
     var refStr=formatRefList(hf.details[num]||[]);
-    html+='<div class="hymn-row">'+
+    html+='<div class="hymn-row'+authorRowClass(num,true)+'">'+
       '<input type="checkbox" class="bible-chapter-hymn-check" data-num="'+num+'" '+(checked?'checked':'')+'>'+
       '<div class="hymn-num">'+escapeHtml(first.number)+'</div>'+
-      '<div class="hymn-title">'+escapeHtml(first.first_line)+
+      '<div class="hymn-title">'+escapeHtml(first.first_line)+authorTagHtml(num)+
         (variants.length>1?' <span class="hymn-tune">('+variants.length+' tune settings)</span>':(first.tune?' <span class="hymn-tune">— '+escapeHtml(first.tune)+'</span>':''))+
         '<div class="hymn-section" id="biblesec-'+num+'">'+escapeHtml(first.part)+(first.subsection?' / '+escapeHtml(first.subsection):'')+(first.author?' &middot; '+escapeHtml(first.author):'')+
           (refStr?'<br>Verse(s) linked by the Index: '+escapeHtml(refStr):'')+
@@ -623,6 +796,7 @@ function renderBibleChapterResults(){
       '<button class="link-btn" data-secid="biblesec-'+num+'">Details</button>'+
     '</div>';
   });
+  if(!html && authorActive() && state.authorOnly) html='<p class="empty-note">None of these hymns are by '+escapeHtml(state.authorQuery.trim())+'.</p>';
   box.innerHTML=html;
   Array.prototype.forEach.call(box.querySelectorAll('.bible-chapter-hymn-check'), function(cb){
     cb.addEventListener('change', function(){
@@ -632,6 +806,7 @@ function renderBibleChapterResults(){
       renderOtherHymns();
       renderHymnSearchResults();
       renderBibleChapterResults();
+      renderAuthorResults();
     });
   });
   Array.prototype.forEach.call(box.querySelectorAll('[data-secid]'), function(btn){
@@ -647,7 +822,7 @@ var LITURGICAL_COLOURS={
 };
 function colourFor(c){ return LITURGICAL_COLOURS[c] || 'var(--ink-soft)'; }
 
-var state={ service:'principal', bibleVersion:'NRSVA', collectIndex:0, selectedReadings:{}, selectedHymns:{}, includeCollect:false, otherHymns:{}, hymnOrder:{}, hymnOrderCounter:0, covenant:false, covenantHymnAuto:false };
+var state={ service:'principal', bibleVersion:'NRSVA', collectIndex:0, selectedReadings:{}, selectedHymns:{}, includeCollect:false, otherHymns:{}, hymnOrder:{}, hymnOrderCounter:0, covenant:false, covenantHymnAuto:false, authorQuery:'', authorOnly:false };
 function tickHymnOrder(key, checked){
   if(checked){
     if(state.hymnOrder[key]==null) state.hymnOrder[key]=++state.hymnOrderCounter;
@@ -734,7 +909,7 @@ function setCovenant(on){
   } else if(state.covenantHymnAuto){
     delete state.otherHymns[COVENANT_HYMN]; tickHymnOrder(COVENANT_HYMN,false); state.covenantHymnAuto=false;
   }
-  render(); renderOtherHymns(); renderHymnSearchResults();
+  render(); renderOtherHymns(); renderHymnSearchResults(); renderAuthorResults();
 }
 
 function labelPlainReadings(arr){
@@ -913,19 +1088,21 @@ function renderHymns(svc, principal, second){
       var nums=hf.order;
       if(!nums.length) return;
       anyHymns=true;
-      html+='<div class="hymn-group-title">'+escapeHtml(r)+'</div>';
+      html+='<div class="hymn-group-title">'+escapeHtml(r)+authorGroupNote(nums)+'</div>';
+      if(authorActive() && state.authorOnly && nums.every(function(n){return !DATA.hymnal[n] || (authorHides(n) && state.selectedHymns[r+'|'+n]!==true);})) html+='<p class="empty-note">No hymns by '+escapeHtml(state.authorQuery.trim())+' for this reading.</p>';
       nums.forEach(function(num){
         var variants=DATA.hymnal[num];
         if(!variants) return;
         var first=variants[0];
         var key=r+'|'+num;
         var checked = state.selectedHymns[key]===true;
+        if(!checked && authorHides(num)) return;
         state.selectedHymns[key]=checked;
         var verseDetail=formatRefList(hf.details[num]||[]);
-        html+='<div class="hymn-row">'+
+        html+='<div class="hymn-row'+authorRowClass(num,true)+'">'+
           '<input type="checkbox" class="hymn-check" data-key="'+encodeURIComponent(key)+'" '+(checked?'checked':'')+'>'+
           '<div class="hymn-num">'+escapeHtml(first.number)+'</div>'+
-          '<div class="hymn-title">'+escapeHtml(first.first_line)+
+          '<div class="hymn-title">'+escapeHtml(first.first_line)+authorTagHtml(num)+
             (variants.length>1?' <span class="hymn-tune">('+variants.length+' tune settings)</span>':(first.tune?' <span class="hymn-tune">— '+escapeHtml(first.tune)+'</span>':''))+
             '<div class="hymn-section" id="sec-'+encodeURIComponent(key)+'">'+escapeHtml(first.part)+(first.subsection?' / '+escapeHtml(first.subsection):'')+(first.author?' &middot; '+escapeHtml(first.author):'')+
               (verseDetail?'<br>Verse(s) linked by the Index: '+escapeHtml(verseDetail):'')+
@@ -965,10 +1142,10 @@ function renderOtherHymns(){
     var first=variants[0];
     var refs=allScriptureRefsForHymn(num, DATA);
     var refStr=refs.length?formatRefList(refs):'';
-    html+='<div class="hymn-row">'+
+    html+='<div class="hymn-row'+authorRowClass(num,false)+'">'+
       '<input type="checkbox" class="other-hymn-check" data-num="'+num+'" checked>'+
       '<div class="hymn-num">'+escapeHtml(first.number)+'</div>'+
-      '<div class="hymn-title">'+escapeHtml(first.first_line)+
+      '<div class="hymn-title">'+escapeHtml(first.first_line)+authorTagHtml(num)+
         (variants.length>1?' <span class="hymn-tune">('+variants.length+' tune settings)</span>':(first.tune?' <span class="hymn-tune">— '+escapeHtml(first.tune)+'</span>':''))+
         '<div class="hymn-section" id="othersec-'+num+'">'+escapeHtml(first.part)+(first.subsection?' / '+escapeHtml(first.subsection):'')+(first.author?' &middot; '+escapeHtml(first.author):'')+
           (refStr?'<br>Verse(s) linked by the Index: '+escapeHtml(refStr):'<br>No Bible references linked by the Index.')+
@@ -986,6 +1163,7 @@ function renderOtherHymns(){
         tickHymnOrder(num, false);
         renderOtherHymns();
         renderHymnSearchResults();
+        renderAuthorResults();
       }
     });
   });
@@ -1026,10 +1204,10 @@ function renderHymnSearchResults(){
     var checked=state.otherHymns[num]===true;
     var refs=allScriptureRefsForHymn(num, DATA);
     var refStr=refs.length?formatRefList(refs):'';
-    html+='<div class="hymn-row">'+
+    html+='<div class="hymn-row'+authorRowClass(num,false)+'">'+
       '<input type="checkbox" class="search-hymn-check" data-num="'+num+'" '+(checked?'checked':'')+'>'+
       '<div class="hymn-num">'+escapeHtml(first.number)+'</div>'+
-      '<div class="hymn-title">'+escapeHtml(first.first_line)+
+      '<div class="hymn-title">'+escapeHtml(first.first_line)+authorTagHtml(num)+
         (variants.length>1?' <span class="hymn-tune">('+variants.length+' tune settings)</span>':(first.tune?' <span class="hymn-tune">— '+escapeHtml(first.tune)+'</span>':''))+
         '<div class="hymn-section" id="searchsec-'+num+'">'+escapeHtml(first.part)+(first.subsection?' / '+escapeHtml(first.subsection):'')+(first.author?' &middot; '+escapeHtml(first.author):'')+
           (refStr?'<br>Verse(s) linked by the Index: '+escapeHtml(refStr):'<br>No Bible references linked by the Index.')+
@@ -1047,6 +1225,7 @@ function renderHymnSearchResults(){
       tickHymnOrder(num, cb.checked);
       renderOtherHymns();
       renderHymnSearchResults();
+      renderAuthorResults();
       var input=document.getElementById('hymn-search-input');
       input.focus();
     });
@@ -1187,6 +1366,21 @@ function initApp(){
   document.getElementById('btn-export-text').addEventListener('click', exportText);
   document.getElementById('btn-export-pdf').addEventListener('click', exportPdf);
   document.getElementById('hymn-search-input').addEventListener('input', renderHymnSearchResults);
+  populateAuthorControls();
+  document.getElementById('author-input').addEventListener('input', function(){ setAuthorQuery(this.value); });
+  document.getElementById('chk-author-only').addEventListener('change', function(){ state.authorOnly=this.checked; refreshAuthorUI(); });
+  document.getElementById('btn-author-clear').addEventListener('click', function(){
+    document.getElementById('author-input').value=''; setAuthorQuery('');
+  });
+  document.getElementById('author-chips').addEventListener('click', function(e){
+    var b=e.target.closest ? e.target.closest('button[data-name]') : null;
+    if(!b) return;
+    var name=decodeURIComponent(b.getAttribute('data-name'));
+    var input=document.getElementById('author-input');
+    var same=foldText(input.value).trim()===foldText(name);
+    input.value=same?'':name;
+    setAuthorQuery(input.value);
+  });
   populateBibleBookSelect();
   document.getElementById('bible-book-select').addEventListener('change', function(){
     populateBibleChapterSelect(this.value);

@@ -10,7 +10,8 @@
 // and includes the Methodist Worship Book lectionary corrections.
 // v4: Adds the Covenant Sunday option (first Sunday in September or January).
 // v6: Shows the RCL Proper number (e.g. Proper 25) beside post-Trinity Sundays.
-const CACHE_NAME = 'worship-planner-v6';
+// v7: Adds the Hymn Authors panel (highlight / list hymns by author).
+const CACHE_NAME = 'worship-planner-v7';
 
 const APP_SHELL = [
   './',

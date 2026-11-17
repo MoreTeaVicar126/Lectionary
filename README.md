@@ -30,5 +30,8 @@ Select A Bible Book and Chapter. This drop down is populated by those Scriptures
 This section is useful for helping you find a partially remembered first line. If you knew, for example, that the first line contained "GLORY" then this section would narrow it down to the 27 hymns in StF which have "GLORY" in the first line.
 This section also works as a Hymn Explorer. When you click Details on one of these hymns, it lists ALL the Scripture references in the hymn. Take a look at almost any Charles Wesley hymn to see how rich in Scripture they are.
 
+**Hymn Authors**
+Type an author's name (for example "Wesley" or "Watts") into the Hymn Authors box, or tap one of the quick buttons for the most-represented authors. Their hymns are then highlighted in the Hymns suggested for your readings (with a count against each reading), in Hymns by Bible Passage, in Other Hymns and in the hymn search results, and every hymn in the book by that author is listed in the box itself, where you can tick to add it to Other Hymns. Tick "Show only this author's hymns" to hide the rest in the reading and Bible Passage lists (hymns you have already ticked stay visible). Matching is on part of the name, so "Wesley" finds Charles and John Wesley (and Scott Wesley Brown); choose the full name from the suggestions to be precise. Adapters, such as "adapted by Norman Wallwork", are not counted as authors.
+
 **Export**
 Once you have chosen your Readings and Collect, select the hymns in the order they will be used in the service. The app then builds the service sheet based on that order, so that you can export to text or pdf to email to the Church Steward.
