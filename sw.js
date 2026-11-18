@@ -14,7 +14,8 @@
 // v8: Fixes the missing collects on the Sunday before Advent (Christ the King);
 //     adds the Special Sundays collect drop-down.
 // v9: Remembrance Sunday collect shown only for the Sunday nearest 11 November.
-const CACHE_NAME = 'worship-planner-v9';
+// v10: Mothering Sunday collect shown only on the Fourth Sunday in Lent.
+const CACHE_NAME = 'worship-planner-v10';
 
 const APP_SHELL = [
   './',

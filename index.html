@@ -1068,11 +1068,19 @@ function isRemembranceSunday(d){
   if(!e) return false;
   return e.date.getTime()===nearestSundayTo(new Date(e.date.getFullYear(),10,11)).getTime();
 }
+// Mothering Sunday is the Fourth Sunday in Lent: exactly three weeks before Easter Day.
+function isMotheringSunday(d){
+  if(!d) return false;
+  var e=findOccasionForDate(ymd(d), DATA.lectionary).entry;
+  if(!e) return false;
+  return e.date.getTime()===addDays(easterSunday(e.date.getFullYear()),-21).getTime();
+}
 function specialCollectInSeason(k, d){
   if(k==='New Year: Watchnight') return watchnightSeason(d);
   if(/^Christmas /.test(k)) return christmasRunUp(d);
   if(/^Easter Day/.test(k)) return easterRunUp(d);
   if(k==='Remembrance Sunday') return isRemembranceSunday(d);
+  if(k==='Mothering Sunday') return isMotheringSunday(d);
   return true;
 }
 function specialCollectOptions(pickedDate){
