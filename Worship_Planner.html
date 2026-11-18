@@ -1048,10 +1048,19 @@ function easterRunUp(d){
   var diff=Math.round((easterSunday(d.getFullYear())-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/86400000);
   return diff>=0 && diff<=6;
 }
+// Remembrance Sunday is the Sunday nearest to 11 November. Any date in that Sunday's week
+// resolves to it, as with the other occasions.
+function isRemembranceSunday(d){
+  if(!d) return false;
+  var e=findOccasionForDate(ymd(d), DATA.lectionary).entry;
+  if(!e) return false;
+  return e.date.getTime()===nearestSundayTo(new Date(e.date.getFullYear(),10,11)).getTime();
+}
 function specialCollectInSeason(k, d){
   if(k==='New Year: Watchnight') return watchnightSeason(d);
   if(/^Christmas /.test(k)) return christmasRunUp(d);
   if(/^Easter Day/.test(k)) return easterRunUp(d);
+  if(k==='Remembrance Sunday') return isRemembranceSunday(d);
   return true;
 }
 function specialCollectOptions(pickedDate){

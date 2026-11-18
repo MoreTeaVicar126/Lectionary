@@ -13,7 +13,8 @@
 // v7: Adds the Hymn Authors panel (highlight / list hymns by author).
 // v8: Fixes the missing collects on the Sunday before Advent (Christ the King);
 //     adds the Special Sundays collect drop-down.
-const CACHE_NAME = 'worship-planner-v8';
+// v9: Remembrance Sunday collect shown only for the Sunday nearest 11 November.
+const CACHE_NAME = 'worship-planner-v9';
 
 const APP_SHELL = [
   './',
