@@ -11,7 +11,9 @@
 // v4: Adds the Covenant Sunday option (first Sunday in September or January).
 // v6: Shows the RCL Proper number (e.g. Proper 25) beside post-Trinity Sundays.
 // v7: Adds the Hymn Authors panel (highlight / list hymns by author).
-const CACHE_NAME = 'worship-planner-v7';
+// v8: Fixes the missing collects on the Sunday before Advent (Christ the King);
+//     adds the Special Sundays collect drop-down.
+const CACHE_NAME = 'worship-planner-v8';
 
 const APP_SHELL = [
   './',
