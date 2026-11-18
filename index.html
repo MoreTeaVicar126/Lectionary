@@ -91,6 +91,8 @@ button.toggle.active{background:var(--red);color:#fff;border-color:var(--red);}
 .author-tag{display:inline-block;font-family:var(--ui);font-size:11px;font-weight:700;color:var(--red-dark);background:var(--red-tint);border:1px solid var(--red);border-radius:10px;padding:0 7px;margin-left:6px;vertical-align:1px;}
 .author-count{font-weight:700;color:var(--red-dark);text-transform:none;letter-spacing:0;}
 .author-opts{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:6px 0;}
+.update-flag{color:var(--red-dark);}
+#update-msg{margin-left:4px;}
 .special-collect{margin:6px 0 4px;}
 .author-results{max-height:380px;overflow-y:auto;margin-top:8px;border-top:1px dashed var(--line);}
 #printview{display:none;}
@@ -204,7 +206,7 @@ button.toggle.active{background:var(--red);color:#fff;border-color:var(--red);}
     </div>
   </div>
 
-  <p class="small" style="margin-top:24px;">Unofficial planning aid for personal use &mdash; not an official Methodist Church publication. Liturgical colour palette used with respect to the Church's own visual identity guidance. <span id="app-version">Version 11 &middot; 18 November 2026</span></p>
+  <p class="small" style="margin-top:24px;">Unofficial planning aid for personal use &mdash; not an official Methodist Church publication. Liturgical colour palette used with respect to the Church's own visual identity guidance. <span id="app-version">Version 12 &middot; 18 November 2026</span> &middot; <a href="#" id="link-update">Check for updates</a><span id="update-msg"></span></p>
 </div>
 
 <div id="printview"></div>
@@ -1400,6 +1402,60 @@ function exportPdf(){
   window.print();
 }
 
+/* ============ Updates ============
+   Keep APP_VERSION, version.json and CACHE_NAME in sw.js in step whenever the app changes. */
+var APP_VERSION=12, APP_DATE='18 November 2026';
+var ONLINE_BASE='https://moreteavicar126.github.io/Lectionary/';
+function updateBase(){ return location.protocol==='file:' ? ONLINE_BASE : ''; }
+function goTo(url){ location.replace(url); }
+function updateMsgEl(){ return document.getElementById('update-msg'); }
+function showUpdateAvailable(ver){
+  updateMsgEl().innerHTML=' <strong class="update-flag">Version '+ver+' is available.</strong> <a href="#" id="link-refresh">Refresh now</a> <span>(your current selections will be cleared)</span>';
+  document.getElementById('link-refresh').addEventListener('click', function(e){ e.preventDefault(); forceRefresh(ver); });
+}
+function checkForUpdate(manual){
+  var msg=updateMsgEl();
+  if(!navigator.onLine){ if(manual) msg.textContent=' You appear to be offline — try again when connected.'; return; }
+  if(manual) msg.textContent=' Checking…';
+  fetch(updateBase()+'version.json?t='+Date.now(), {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); })
+    .then(function(v){
+      if(v && Number(v.version)>APP_VERSION) showUpdateAvailable(v.version);
+      else msg.textContent=manual ? ' You have the latest version.' : '';
+    })
+    .catch(function(){ if(manual) msg.textContent=' Could not check just now — try again later.'; });
+}
+// Force refresh: remove the offline copy and any saved files, then reload from the web.
+function forceRefresh(ver){
+  var msg=updateMsgEl();
+  if(location.protocol==='file:'){
+    window.open(ONLINE_BASE,'_blank');
+    msg.textContent=' Opened the online version. To update this saved file, download the latest Worship_Planner.html from GitHub.';
+    return;
+  }
+  msg.textContent=' Refreshing…';
+  var tasks=[];
+  if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
+    tasks.push(navigator.serviceWorker.getRegistrations().then(function(regs){
+      return Promise.all(regs.map(function(r){return r.unregister();}));
+    }));
+  }
+  if(window.caches && caches.keys){
+    tasks.push(caches.keys().then(function(keys){
+      return Promise.all(keys.map(function(k){return caches.delete(k);}));
+    }));
+  }
+  Promise.all(tasks).catch(function(){}).then(function(){
+    goTo(location.pathname+'?v='+(ver||Date.now()));
+  });
+}
+function initUpdates(){
+  document.getElementById('app-version').textContent='Version '+APP_VERSION+' · '+APP_DATE;
+  document.getElementById('link-update').addEventListener('click', function(e){ e.preventDefault(); checkForUpdate(true); });
+  if(/[?&]v=/.test(location.search) && window.history && history.replaceState) history.replaceState(null,'',location.pathname+location.hash);
+  setTimeout(function(){ checkForUpdate(false); }, 2500);
+}
+
 /* ============ Wire up ============ */
 function refreshCalendarListIfOpen(){
   var el=document.getElementById('calendar-list');
@@ -1435,6 +1491,7 @@ function initApp(){
   document.getElementById('btn-export-text').addEventListener('click', exportText);
   document.getElementById('btn-export-pdf').addEventListener('click', exportPdf);
   document.getElementById('hymn-search-input').addEventListener('input', renderHymnSearchResults);
+  initUpdates();
   populateAuthorControls();
   document.getElementById('author-input').addEventListener('input', function(){ setAuthorQuery(this.value); });
   document.getElementById('chk-author-only').addEventListener('change', function(){ state.authorOnly=this.checked; refreshAuthorUI(); });

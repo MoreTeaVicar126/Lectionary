@@ -16,7 +16,9 @@
 // v9: Remembrance Sunday collect shown only for the Sunday nearest 11 November.
 // v10: Mothering Sunday collect shown only on the Fourth Sunday in Lent.
 // v11: Version number shown in the footer of the app (keep it in step with this number).
-const CACHE_NAME = 'worship-planner-v11';
+// v12: Adds a "Check for updates" link in the footer. WHEN YOU UPDATE THE APP, also change
+//      APP_VERSION in index.html and Worship_Planner.html, and the number in version.json.
+const CACHE_NAME = 'worship-planner-v12';
 
 const APP_SHELL = [
   './',
