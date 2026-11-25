@@ -1,3 +1,19 @@
+# Worship Apps
+
+This repository is published with GitHub Pages at https://moreteavicar126.github.io/Lectionary/ and holds a landing page plus two apps, each of which can be saved for offline use:
+
+| Folder | App |
+| --- | --- |
+| `/` (index.html) | Landing page: choose an app, open it, or save it for offline use |
+| `worship-planner/` | The Worship Planner (Lectionary, Bible Readings, Hymn Selector) |
+| `lectern/` | Lectern, a service leader's companion for iPad |
+
+`Worship_Planner.html` at the top level is the single-file download of the Worship Planner (see below).
+
+**Updating an app:** change its `index.html`, then bump the cache name in that folder's `sw.js` (Worship Planner: also `APP_VERSION` in the app and `version.json`). Each app deletes only its own caches, so updating one never affects the others.
+
+---
+
 Thank you for downloading the Worship Planner. 
 
 **INSTALLATION**

@@ -1392,8 +1392,8 @@ function exportPdf(){
 
 /* ============ Updates ============
    Keep APP_VERSION, version.json and CACHE_NAME in sw.js in step whenever the app changes. */
-var APP_VERSION=12, APP_DATE='18 November 2026';
-var ONLINE_BASE='https://moreteavicar126.github.io/Lectionary/';
+var APP_VERSION=13, APP_DATE='25 November 2026';
+var ONLINE_BASE='https://moreteavicar126.github.io/Lectionary/worship-planner/';
 function updateBase(){ return location.protocol==='file:' ? ONLINE_BASE : ''; }
 function goTo(url){ location.replace(url); }
 function updateMsgEl(){ return document.getElementById('update-msg'); }
@@ -1425,12 +1425,13 @@ function forceRefresh(ver){
   var tasks=[];
   if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
     tasks.push(navigator.serviceWorker.getRegistrations().then(function(regs){
-      return Promise.all(regs.map(function(r){return r.unregister();}));
+      /* Only this app's own registration: other apps on this site (e.g. Lectern) keep theirs. */
+      return Promise.all(regs.filter(function(r){return /\/worship-planner\/$/.test(r.scope);}).map(function(r){return r.unregister();}));
     }));
   }
   if(window.caches && caches.keys){
     tasks.push(caches.keys().then(function(keys){
-      return Promise.all(keys.map(function(k){return caches.delete(k);}));
+      return Promise.all(keys.filter(function(k){return k.indexOf('worship-planner-')===0;}).map(function(k){return caches.delete(k);}));
     }));
   }
   Promise.all(tasks).catch(function(){}).then(function(){
