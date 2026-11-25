@@ -10,6 +10,8 @@ This repository is published with GitHub Pages at https://moreteavicar126.github
 
 `Worship_Planner.html` at the top level is the single-file download of the Worship Planner (see below).
 
+**Old copies:** a copy of `version.json` is kept at the top level so Worship Planner copies installed before the move (v12 and earlier, including saved `Worship_Planner.html` files) can still find out about updates. When you bump the Worship Planner version, update both `version.json` files.
+
 **Updating an app:** change its `index.html`, then bump the cache name in that folder's `sw.js` (Worship Planner: also `APP_VERSION` in the app and `version.json`). Each app deletes only its own caches, so updating one never affects the others.
 
 ---
