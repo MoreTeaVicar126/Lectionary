@@ -94,7 +94,11 @@ section.view{display:flex;flex-direction:column;height:100vh;height:100dvh;paddi
 .fmiss{margin:10px auto;max-width:46em;color:var(--danger)}
 .dph{display:none;flex:1;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:30px;font:20px/1.5 var(--serif)}
 .narrow-only{display:inline-flex}
+.wide-only{display:none}
 @media (min-width:1000px){
+  .wide-only{display:inline-flex}
+  .svbody.hideorder:not(.editing){grid-template-columns:0 1fr}
+  .svbody.hideorder:not(.editing) .pane{visibility:hidden;overflow:hidden;border-right:0}
   .svbody:not(.editing){grid-template-columns:minmax(360px,38%) 1fr}
   .svbody:not(.editing) .pane{border-right:1px solid var(--line)}
   .svbody:not(.editing) .dpane{position:static;transform:none;visibility:visible;z-index:auto;transition:none;padding:0}
@@ -182,6 +186,7 @@ details.box>summary::-webkit-details-marker{display:none}
     <div class="bar-title" id="svTitle"></div>
     <div class="bar-actions">
       <span class="grp view-only"><button class="btn" id="osMinus" aria-label="Smaller text">A−</button><button class="btn" id="osPlus" aria-label="Larger text">A+</button></span>
+      <button class="btn view-only wide-only" id="hideBtn" title="Hide the order of service to give the detail the full screen">Hide service</button>
       <button class="btn view-only" id="awakeBtn" title="Stop the iPad screen dimming">Awake</button>
       <button class="btn" id="svTheme" title="Light / dark">Day/Night</button>
       <button class="btn" id="svExport">Export</button>
@@ -518,8 +523,12 @@ async function openService(id,mode){
   S.cur=S.services.find(s=>s.id===id);if(!S.cur)return;
   S.open=null;S.here=null;show('service');setMode(mode||'view');
 }
+function setHide(v){
+  S.hide=!!v;$('#svBody').classList.toggle('hideorder',S.hide);
+  const b=$('#hideBtn');b.textContent=S.hide?'Show service':'Hide service';b.classList.toggle('on',S.hide);
+}
 function setMode(m){
-  S.mode=m;const edit=m==='edit';
+  S.mode=m;const edit=m==='edit';setHide(false);
   $('#svBody').classList.toggle('editing',edit);
   $('#viewer').hidden=edit;$('#editor').hidden=!edit;
   $('#svEdit').textContent=edit?'Done':'Edit';
@@ -852,6 +861,7 @@ function wire(){
   $('#xPrint').onclick=()=>window.print();
   $('#osMinus').onclick=()=>bump('os',-1);$('#osPlus').onclick=()=>bump('os',1);
   $('#dsMinus').onclick=()=>bump('ds',-1);$('#dsPlus').onclick=()=>bump('ds',1);
+  $('#hideBtn').onclick=()=>setHide(!S.hide);
   $('#awakeBtn').onclick=()=>{cfg.awake=!cfg.awake;LS.set('awake',cfg.awake);wake(cfg.awake);updateAwakeBtn()};
   $('#dBack').onclick=()=>closeDetail();
   $('#dPrev').onclick=()=>stepDetail(-1);$('#dNext').onclick=()=>stepDetail(1);

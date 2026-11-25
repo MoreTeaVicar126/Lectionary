@@ -7,11 +7,12 @@
 // browser's own storage and are never touched by this file.
 //
 // If you change index.html, bump CACHE below so installed copies refresh cleanly.
-const CACHE = 'lectern-v1';
+// v2: adds the Hide service / Show service button.
+const CACHE = 'lectern-v2';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', function (event) {
-  event.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
+  event.waitUntil(caches.open(CACHE).then(function (c) { return Promise.all(SHELL.map(function (u) { return c.add(new Request(u, { cache: 'reload' })); })); }).then(function () { return self.skipWaiting(); }));
 });
 
 self.addEventListener('activate', function (event) {
